@@ -2,6 +2,7 @@
 <html lang='en'>
 <head>
     <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
     <title>Warzone 2100 STA Generator</title>
     <style>
         img {
@@ -33,40 +34,40 @@
       <li>Drag and drop a <code>.sta2</code> file onto this page</li>
     </ol>
 
-    <input type="file" id="uploadBtn" accept=".sta2"><br><br>
+    <input type='file' id='uploadBtn' accept='.sta2'><br><br>
 
-    <div class="hidden-images" style="display: none;">
-        <img id="img_medal_baby" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png">
-        <img id="img_medal_bronze" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png">
-        <img id="img_medal_silver" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png">
-        <img id="img_medal_gold" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png">
-        <img id="img_star3" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png">
-        <img id="img_star2" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png">
-        <img id="img_star1" src="https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png">
+    <div class='hidden-images' style='display: none;'>
+        <img id='img_medal_baby' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png'>
+        <img id='img_medal_bronze' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png'>
+        <img id='img_medal_silver' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png'>
+        <img id='img_medal_gold' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png'>
+        <img id='img_star3' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png'>
+        <img id='img_star2' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png'>
+        <img id='img_star1' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png'>
     </div>
 
-    <div id="decorationImages" style="display: none;"></div>
+    <div id='decorationImages' style='display: none;'></div>
 
     <br><br>
 
-    <button id='downloadBtn' style="display: none;">Download</button>
+    <button id='downloadBtn' style='display: none;'>Download</button>
 
     <script>
         const DISPLAY_SIZE = 64; // Adjust this to scale everything
 
         const MEDAL = {
-            "BABY": -1,
-            "NONE": 0,
-            "LEVEL1": 1,
-            "LEVEL2": 2,
-            "LEVEL3": 3,
+            'BABY': -1,
+            'NONE': 0,
+            'LEVEL1': 1,
+            'LEVEL2': 2,
+            'LEVEL3': 3,
         };
 
         const STAR = {
-            "NONE": 0,
-            "BRONZE": 1,
-            "SILVER": 2,
-            "GOLD": 3,
+            'NONE': 0,
+            'BRONZE': 1,
+            'SILVER': 2,
+            'GOLD': 3,
         };
 
         let staContent = {
@@ -76,7 +77,7 @@
             totalKills  : 0,
             totalScore  : 0,
             gamesPlayed : 0,
-            publicKey   : ""
+            publicKey   : ''
         };
 
         let currentDecoration = {
@@ -86,7 +87,7 @@
             star3: 0
         };
 
-        let uploadedFileName = "Player.sta2"; // default
+        let uploadedFileName = 'Player.sta2'; // default
 
         // Upload
         document.getElementById('uploadBtn').addEventListener('change', (e) => {
@@ -123,7 +124,7 @@
                         totalKills  : parseInt(match.groups.totalKills),
                         totalScore  : parseInt(match.groups.totalScore),
                         gamesPlayed : parseInt(match.groups.gamesPlayed),
-                        publicKey   : match.groups.publicKey || ""
+                        publicKey   : match.groups.publicKey || ''
                     };
                     const { wins, losses, totalKills, totalScore, gamesPlayed } = staContent;
                     currentDecoration = toDecoration(wins, losses, totalKills, totalScore, gamesPlayed);
@@ -432,7 +433,7 @@
                 result.losses = Math.floor(result.wins / 3); // Ensure wins > 2 * losses
             } else {
                 // MEDAL.NONE - must NOT satisfy any LEVEL requirements
-                result.losses = result.wins; // Ensure we don"t satisfy ratio requirements
+                result.losses = result.wins; // Ensure we don't satisfy ratio requirements
             }
 
             return result;
