@@ -86,6 +86,8 @@
             star3: 0
         };
 
+        let uploadedFileName = "Player.sta2"; // default
+
         // Upload
         document.getElementById('uploadBtn').addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -109,6 +111,7 @@
         }, false);
 
         function handleFile(file) {
+            uploadedFileName = file.name;
             const reader = new FileReader();
             reader.onload = (event) => {
                 const match = event.target.result.match(/WZ\.STA\.v(?<version>\d+)\n(?<wins>\d+) (?<losses>\d+) (?<totalKills>\d+) (?<totalScore>\d+) (?<gamesPlayed>\d+)(\n(?<publicKey>.+))?/);
@@ -141,13 +144,12 @@
             if (staContent.publicKey) {
                 content += `\n${staContent.publicKey}`;
             }
-            const filename = 'Player.sta2';
             const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
 
             const a = document.createElement('a');
             a.href = url;
-            a.download = filename;
+            a.download = uploadedFileName;
             a.click();
 
             URL.revokeObjectURL(url);
