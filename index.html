@@ -35,7 +35,10 @@
       <li>Drag and drop a <code>.sta2</code> file onto this page</li>
     </ol>
 
-    <input type='file' id='uploadBtn' accept='.sta2'><br><br>
+    <input type='file' id='upload' accept='.sta2' style='display:none;'>
+    <button id='browse'>Browse...</button>
+    <div id="filename" style='display:inline-block;'>No file selected.</div>
+    <br><br>
 
     <div class='hidden-images' style='display: none;'>
         <img id='img_medal_baby' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png'>
@@ -88,32 +91,39 @@
             star3: 0
         };
 
-        let uploadedFileName = 'Player.sta2'; // default
+        // Upload: Browse
+        document.getElementById('browse').addEventListener('click', e => document.getElementById('upload').click());
+        document.getElementById('upload').addEventListener('change', e => handleFile(e.target.files?.[0]));
 
-        // Upload
-        document.getElementById('uploadBtn').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            handleFile(file);
+        // Upload: Drag and drop
+        window.addEventListener('dragover', e => e.preventDefault());
+        window.addEventListener('drop', e => {
+            e.preventDefault();
+            handleFile(e.dataTransfer.files?.[0]);
         });
 
-        // Drag and drop anywhere on the page
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            document.addEventListener(eventName, (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
-        document.addEventListener('drop', (e) => {
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                handleFile(files[0]);
+        // Download
+        document.getElementById('downloadBtn').addEventListener('click', () => {
+            const { wins, losses, totalKills, totalScore, gamesPlayed } = fromDecoration(currentDecoration.medal, currentDecoration.star1, currentDecoration.star2, currentDecoration.star3);
+            let content = `WZ.STA.v3\n${wins} ${losses} ${totalKills} ${totalScore} ${gamesPlayed}`;
+            if (staContent.publicKey) {
+                content += `\n${staContent.publicKey}`;
             }
-        }, false);
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = document.getElementById('filename').textContent;
+            a.click();
+
+            URL.revokeObjectURL(url);
+        });
 
         function handleFile(file) {
-            uploadedFileName = file.name;
+            if (!file) {
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (event) => {
                 const match = event.target.result.match(/WZ\.STA\.v(?<version>\d+)\n(?<wins>\d+) (?<losses>\d+) (?<totalKills>\d+) (?<totalScore>\d+) (?<gamesPlayed>\d+)(\n(?<publicKey>.+))?/);
@@ -129,35 +139,19 @@
                     };
                     const { wins, losses, totalKills, totalScore, gamesPlayed } = staContent;
                     currentDecoration = toDecoration(wins, losses, totalKills, totalScore, gamesPlayed);
-                    updateDisplay();
-                    // Show editor/display and download button after file is uploaded
+                    updateEditor();
+
+                    document.getElementById('filename').textContent = file.name;
+
+                    // Unhide editor and download button
                     document.getElementById('decorationImages').style.display = 'block';
                     document.getElementById('downloadBtn').style.display = 'inline-block';
                 }
             };
-
             reader.readAsText(file);
         }
 
-        // Download
-        document.getElementById('downloadBtn').addEventListener('click', function() {
-            const { wins, losses, totalKills, totalScore, gamesPlayed } = fromDecoration(currentDecoration.medal, currentDecoration.star1, currentDecoration.star2, currentDecoration.star3);
-            let content = `WZ.STA.v3\n${wins} ${losses} ${totalKills} ${totalScore} ${gamesPlayed}`;
-            if (staContent.publicKey) {
-                content += `\n${staContent.publicKey}`;
-            }
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = uploadedFileName;
-            a.click();
-
-            URL.revokeObjectURL(url);
-        });
-
-        function updateDisplay() {
+        function updateEditor() {
             const { medal, star1, star2, star3 } = currentDecoration;
             const container = document.getElementById('decorationImages');
             container.innerHTML = '';
@@ -196,7 +190,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.SILVER;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star1 === STAR.SILVER) {
@@ -205,7 +199,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.GOLD;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star1 === STAR.GOLD) {
@@ -214,7 +208,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.NONE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else {
@@ -222,7 +216,7 @@
                     placeholder.className = 'star-slot';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.BRONZE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(placeholder);
                 }
@@ -235,7 +229,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.SILVER;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star2 === STAR.SILVER) {
@@ -244,7 +238,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.GOLD;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star2 === STAR.GOLD) {
@@ -253,7 +247,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.NONE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else {
@@ -261,7 +255,7 @@
                     placeholder.className = 'star-slot';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.BRONZE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(placeholder);
                 }
@@ -274,7 +268,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.SILVER;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star3 === STAR.SILVER) {
@@ -283,7 +277,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.GOLD;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else if (star3 === STAR.GOLD) {
@@ -292,7 +286,7 @@
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.NONE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(img);
                 } else {
@@ -300,7 +294,7 @@
                     placeholder.className = 'star-slot';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.BRONZE;
-                        updateDisplay();
+                        updateEditor();
                     });
                     starsDiv.appendChild(placeholder);
                 }
@@ -320,7 +314,7 @@
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.NONE;
-                    updateDisplay();
+                    updateEditor();
                 });
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL1) {
@@ -329,7 +323,7 @@
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL2;
-                    updateDisplay();
+                    updateEditor();
                 });
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL2) {
@@ -338,7 +332,7 @@
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL3;
-                    updateDisplay();
+                    updateEditor();
                 });
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL3) {
@@ -347,7 +341,7 @@
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.BABY;
-                    updateDisplay();
+                    updateEditor();
                 });
                 medalCell.appendChild(medalImg);
             } else {
@@ -355,7 +349,7 @@
                 placeholder.className = 'medal-slot';
                 placeholder.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL1;
-                    updateDisplay();
+                    updateEditor();
                 });
                 medalCell.appendChild(placeholder);
             }
@@ -498,7 +492,7 @@
         }
 
         // Initialize display
-        updateDisplay();
+        updateEditor();
 
         // Apply dynamic sizing
         function applyStyles() {
