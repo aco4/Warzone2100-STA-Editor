@@ -52,9 +52,9 @@
 
     <div id='decorationImages' style='display: none;'></div>
 
-    <br><br>
+    <br>
 
-    <button id='downloadBtn' style='display: none;'>Download</button>
+    <button id='download' style='display: none;'>Download</button>
 
     <script>
         const DISPLAY_SIZE = 64; // Adjust this to scale everything
@@ -103,7 +103,7 @@
         });
 
         // Download
-        document.getElementById('downloadBtn').addEventListener('click', () => {
+        document.getElementById('download').addEventListener('click', () => {
             const { wins, losses, totalKills, totalScore, gamesPlayed } = fromDecoration(currentDecoration.medal, currentDecoration.star1, currentDecoration.star2, currentDecoration.star3);
             let content = `WZ.STA.v3\n${wins} ${losses} ${totalKills} ${totalScore} ${gamesPlayed}`;
             if (staContent.publicKey) {
@@ -145,7 +145,7 @@
 
                     // Unhide editor and download button
                     document.getElementById('decorationImages').style.display = 'block';
-                    document.getElementById('downloadBtn').style.display = 'inline-block';
+                    document.getElementById('download').style.display = 'inline-block';
                 }
             };
             reader.readAsText(file);
@@ -357,6 +357,13 @@
             tr.appendChild(medalCell);
             table.appendChild(tr);
             container.appendChild(table);
+
+            if (medal === MEDAL.LEVEL2 && star3 === STAR.NONE ||
+                medal === MEDAL.LEVEL3 && star3 === STAR.NONE) {
+                document.getElementById('download').disabled = true;
+            } else {
+                document.getElementById('download').disabled = false;
+            }
         }
 
         function fromDecoration(medal, star1, star2, star3) {
