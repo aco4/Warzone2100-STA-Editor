@@ -6,7 +6,13 @@
     <title>Warzone 2100 STA Editor</title>
     <link rel='icon' type='image/x-icon' href='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png'>
     <style>
-        img {
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .editable {
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
@@ -26,33 +32,31 @@
     </style>
 </head>
 <body>
-    <ol>
-      <li>Start Warzone 2100</li>
-      <li>Click "Options"</li>
-      <li>Click "Open Configuration Directory"</li>
-      <li>Open 📁multiplay</li>
-      <li>Open 📁players</li>
-      <li>Drag and drop a <code>.sta2</code> file onto this page</li>
-    </ol>
-
-    <input type='file' id='upload' accept='.sta2' style='display:none;'>
-    <button id='browse'>Browse...</button>
-    <div id="filename" style='display:inline-block;'>No file selected.</div>
-    <br><br>
-
-    <div class='hidden-images' style='display: none;'>
-        <img id='img_medal_baby' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png'>
-        <img id='img_medal_bronze' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png'>
-        <img id='img_medal_silver' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png'>
-        <img id='img_medal_gold' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png'>
-        <img id='img_star3' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png'>
-        <img id='img_star2' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png'>
-        <img id='img_star1' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png'>
+    <div style='display: none;'>
+        <img id='img_medal_baby' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png'>
+        <img id='img_medal_bronze' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png'>
+        <img id='img_medal_silver' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png'>
+        <img id='img_medal_gold' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png'>
+        <img id='img_star3' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png'>
+        <img id='img_star2' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png'>
+        <img id='img_star1' class='editable' src='https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png'>
     </div>
 
-    <div id='decorationImages' style='display: none;'></div>
+    <div id='instructions'>
+        <ol>
+            <li>Open <code>📁multiplay/players</code></li>
+            <img src='open_configuration_directory.jpg' alt='Open Configuration Directory' style='width: 500px; margin: 1em'/>
+            <li>Drag and drop a <code>.sta2</code> file onto this page</li>
+        </ol>
+    </div>
 
-    <br>
+    <div>
+        <input id='upload' type='file' accept='.sta2' style='display: none;'>
+        <button id='browse'>Browse...</button>
+        <div id='filename' style='display: inline-block;'>No file selected.</div>
+    </div>
+
+    <div id='editor' style='display: none; margin: 1em;'></div>
 
     <button id='download' style='display: none;'>Download</button>
 
@@ -81,7 +85,7 @@
             totalKills  : 0,
             totalScore  : 0,
             gamesPlayed : 0,
-            publicKey   : ''
+            privateKey  : ''
         };
 
         let currentDecoration = {
@@ -106,8 +110,8 @@
         document.getElementById('download').addEventListener('click', () => {
             const { wins, losses, totalKills, totalScore, gamesPlayed } = fromDecoration(currentDecoration.medal, currentDecoration.star1, currentDecoration.star2, currentDecoration.star3);
             let content = `WZ.STA.v3\n${wins} ${losses} ${totalKills} ${totalScore} ${gamesPlayed}`;
-            if (staContent.publicKey) {
-                content += `\n${staContent.publicKey}`;
+            if (staContent.privateKey) {
+                content += `\n${staContent.privateKey}`;
             }
             const blob = new Blob([content], { type: 'text/plain' });
             const url = URL.createObjectURL(blob);
@@ -126,7 +130,7 @@
             }
             const reader = new FileReader();
             reader.onload = (event) => {
-                const match = event.target.result.match(/WZ\.STA\.v(?<version>\d+)\n(?<wins>\d+) (?<losses>\d+) (?<totalKills>\d+) (?<totalScore>\d+) (?<gamesPlayed>\d+)(\n(?<publicKey>.+))?/);
+                const match = event.target.result.match(/WZ\.STA\.v(?<version>\d+)\n(?<wins>\d+) (?<losses>\d+) (?<totalKills>\d+) (?<totalScore>\d+) (?<gamesPlayed>\d+)(\n(?<privateKey>.+))?/);
                 if (match && match.groups) {
                     staContent = {
                         version     : parseInt(match.groups.version),
@@ -135,7 +139,7 @@
                         totalKills  : parseInt(match.groups.totalKills),
                         totalScore  : parseInt(match.groups.totalScore),
                         gamesPlayed : parseInt(match.groups.gamesPlayed),
-                        publicKey   : match.groups.publicKey || ''
+                        privateKey  : match.groups.privateKey || ''
                     };
                     const { wins, losses, totalKills, totalScore, gamesPlayed } = staContent;
                     currentDecoration = toDecoration(wins, losses, totalKills, totalScore, gamesPlayed);
@@ -143,9 +147,12 @@
 
                     document.getElementById('filename').textContent = file.name;
 
-                    // Unhide editor and download button
-                    document.getElementById('decorationImages').style.display = 'block';
+                    // Unhide editor
+                    document.getElementById('editor').style.display = 'block';
+                    // Unhide download button
                     document.getElementById('download').style.display = 'inline-block';
+                    // Hide instructions
+                    document.getElementById('instructions').style.display = 'none';
                 }
             };
             reader.readAsText(file);
@@ -153,7 +160,7 @@
 
         function updateEditor() {
             const { medal, star1, star2, star3 } = currentDecoration;
-            const container = document.getElementById('decorationImages');
+            const container = document.getElementById('editor');
             container.innerHTML = '';
 
             // Always use table layout
@@ -169,15 +176,15 @@
                 starsCell.style.visibility = 'hidden';
                 const starsDiv = document.createElement('div');
                 let placeholder = document.createElement('div');
-                placeholder.className = 'star-slot';
+                placeholder.className = 'star-slot editable';
                 starsDiv.appendChild(placeholder);
                 starsDiv.appendChild(document.createElement('br'));
                 placeholder = document.createElement('div');
-                placeholder.className = 'star-slot';
+                placeholder.className = 'star-slot editable';
                 starsDiv.appendChild(placeholder);
                 starsDiv.appendChild(document.createElement('br'));
                 placeholder = document.createElement('div');
-                placeholder.className = 'star-slot';
+                placeholder.className = 'star-slot editable';
                 starsDiv.appendChild(placeholder);
                 starsCell.appendChild(starsDiv);
             } else {
@@ -186,7 +193,7 @@
                 // Star1 slot (kills)
                 if (star1 === STAR.BRONZE) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.SILVER;
@@ -195,7 +202,7 @@
                     starsDiv.appendChild(img);
                 } else if (star1 === STAR.SILVER) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.GOLD;
@@ -204,7 +211,7 @@
                     starsDiv.appendChild(img);
                 } else if (star1 === STAR.GOLD) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.NONE;
@@ -213,7 +220,7 @@
                     starsDiv.appendChild(img);
                 } else {
                     const placeholder = document.createElement('div');
-                    placeholder.className = 'star-slot';
+                    placeholder.className = 'star-slot editable';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star1 = STAR.BRONZE;
                         updateEditor();
@@ -225,7 +232,7 @@
                 // Star2 slot (games played)
                 if (star2 === STAR.BRONZE) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.SILVER;
@@ -234,7 +241,7 @@
                     starsDiv.appendChild(img);
                 } else if (star2 === STAR.SILVER) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.GOLD;
@@ -243,7 +250,7 @@
                     starsDiv.appendChild(img);
                 } else if (star2 === STAR.GOLD) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.NONE;
@@ -252,7 +259,7 @@
                     starsDiv.appendChild(img);
                 } else {
                     const placeholder = document.createElement('div');
-                    placeholder.className = 'star-slot';
+                    placeholder.className = 'star-slot editable';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star2 = STAR.BRONZE;
                         updateEditor();
@@ -264,7 +271,7 @@
                 // Star3 slot (wins)
                 if (star3 === STAR.BRONZE) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank3.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.SILVER;
@@ -273,7 +280,7 @@
                     starsDiv.appendChild(img);
                 } else if (star3 === STAR.SILVER) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank2.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.GOLD;
@@ -282,7 +289,7 @@
                     starsDiv.appendChild(img);
                 } else if (star3 === STAR.GOLD) {
                     const img = document.createElement('img');
-                    img.className = 'star';
+                    img.className = 'star editable';
                     img.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_multirank1.png';
                     img.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.NONE;
@@ -291,7 +298,7 @@
                     starsDiv.appendChild(img);
                 } else {
                     const placeholder = document.createElement('div');
-                    placeholder.className = 'star-slot';
+                    placeholder.className = 'star-slot editable';
                     placeholder.addEventListener('click', () => {
                         currentDecoration.star3 = STAR.BRONZE;
                         updateEditor();
@@ -310,7 +317,7 @@
 
             if (medal === MEDAL.BABY) {
                 const medalImg = document.createElement('img');
-                medalImg.className = 'medal';
+                medalImg.className = 'medal editable';
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_dummy.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.NONE;
@@ -319,7 +326,7 @@
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL1) {
                 const medalImg = document.createElement('img');
-                medalImg.className = 'medal';
+                medalImg.className = 'medal editable';
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_bronze.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL2;
@@ -328,7 +335,7 @@
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL2) {
                 const medalImg = document.createElement('img');
-                medalImg.className = 'medal';
+                medalImg.className = 'medal editable';
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_silver.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL3;
@@ -337,7 +344,7 @@
                 medalCell.appendChild(medalImg);
             } else if (medal === MEDAL.LEVEL3) {
                 const medalImg = document.createElement('img');
-                medalImg.className = 'medal';
+                medalImg.className = 'medal editable';
                 medalImg.src = 'https://raw.githubusercontent.com/Warzone2100/warzone2100/refs/heads/master/data/base/images/frontend/image_medal_gold.png';
                 medalImg.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.BABY;
@@ -346,7 +353,7 @@
                 medalCell.appendChild(medalImg);
             } else {
                 const placeholder = document.createElement('div');
-                placeholder.className = 'medal-slot';
+                placeholder.className = 'medal-slot editable';
                 placeholder.addEventListener('click', () => {
                     currentDecoration.medal = MEDAL.LEVEL1;
                     updateEditor();
